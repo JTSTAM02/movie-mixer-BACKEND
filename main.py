@@ -1,5 +1,5 @@
 # Add next to the manage.py file
-from movie_mixer_backend.wsgi import application
+from api.wsgi import application
 
 # App Engine by default looks for a main.py file at the root of the app
 # directory with a WSGI-compatible object called app.

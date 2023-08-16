@@ -88,7 +88,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
-    'movies',
+    'movie',
 ]
 
 X_FRAME_OPTIONS = "SAMEORIGIN"
