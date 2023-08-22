@@ -1,14 +1,22 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from rest_framework_simplejwt import views as jwt_views
+from rest_framework import routers
 from .views import *
 
-router = DefaultRouter()
-router.register(r'movies', MovieViewSet)
+
+router = routers.DefaultRouter()
+# router.register(r'movies', MovieViewSet)
+
 
 urlpatterns = [
     # API URLs from the router
-    path('api/', include(router.urls)),
-    path('api/get_random_movie/', get_random_movie, name="get_random_movie"),
-    path('api/get_trailers/', get_trailers, name = "get_trailers"),
-    ]
+    path('', include(router.urls)),
+    path('get_random_movie/', get_random_movie, name='get_random_movie'),
+    path('get_trailers/<int:id>/', get_trailers, name='get_trailers'),
+    path('user/login/', jwt_views.TokenObtainPairView.as_view(), name='token_create'),
+    path('token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+]
 
+
+    
