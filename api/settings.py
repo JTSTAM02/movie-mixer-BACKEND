@@ -88,7 +88,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
-    'moviemixer',
+    'moviemixer.apps.MoviemixerConfig',
 ]
 
 X_FRAME_OPTIONS = "SAMEORIGIN"
@@ -198,3 +198,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STATIC_ROOT = "static"
 STATIC_URL = "/static/"
 STATICFILES_DIRS = []
+
+AUTH_USER_MODEL='moviemixer.CustomUser'
