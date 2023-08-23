@@ -1,4 +1,3 @@
-from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from .models import *
@@ -23,7 +22,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-from .models import *
 
 class movieSerializer(serializers.ModelSerializer):
     class Meta:

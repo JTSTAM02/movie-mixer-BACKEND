@@ -101,17 +101,17 @@ def get_trailers(request, id):
 
 
 
-class UserLoginView(APIView):
-    def post(self, request):
-        email = request.data.get('email')
-        password = request.data.get('password')
+# class UserLoginView(APIView):
+#     def post(self, request):
+#         email = request.data.get('email')
+#         password = request.data.get('password')
 
-        user = authenticate(request, username=email, password=password)
-        if user:
-            login(request, user)
-            return Response({'message': 'Login successful'}, status=status.HTTP_200_OK)
-        else:
-            return Response({'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+#         user = authenticate(request, username=email, password=password)
+#         if user:
+#             login(request, user)
+#             return Response({'message': 'Login successful'}, status=status.HTTP_200_OK)
+#         else:
+#             return Response({'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 
@@ -122,7 +122,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 
 class UserCreate(APIView):
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = (permissions.AllowAny)
     authentication_classes = ()
     def post(self, request, format='json'):
         serializer = CustomUserSerializer(data=request.data)
