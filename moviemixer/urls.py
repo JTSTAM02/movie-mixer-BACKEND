@@ -12,7 +12,7 @@ urlpatterns = [
     # API URLs from the router
     path('', include(router.urls)),
     path('get_random_movie/', get_random_movie, name='get_random_movie'),
-    path('get_trailers/<int:id>/', get_trailers, name='get_trailers'),
+    path('get_trailers/<str:id>/', get_trailers, name='get_trailers'),
     path('user/login/', jwt_views.TokenObtainPairView.as_view(), name='token_create'),
     path('token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),

@@ -43,9 +43,8 @@ def get_random_movie(request):
     except requests.RequestException as e:
         return JsonResponse({"error": "Error fetching random movie"}, status=500)
 
-def get_trailers(request):
-            id = request.GET.get("id")
-            url = "https://moviesdatabase.p.rapidapi.com/titles/{id}"
+def get_trailers(request, id):
+            url = f"https://moviesdatabase.p.rapidapi.com/titles/{id}"
             querystring = {
                 "list": "most_pop_movies",
                 "info": "trailer"
