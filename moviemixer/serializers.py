@@ -25,13 +25,19 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
 class movieSerializer(serializers.ModelSerializer):
     class Meta:
-        model = movie
+        model = Movie
         fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = '__all__'  
+        fields = '__all__' 
+
+class WatchlistSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'
+
 
 
 

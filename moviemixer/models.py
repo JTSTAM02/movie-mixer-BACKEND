@@ -1,19 +1,43 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import User
+from django.conf import settings
 
 
-# Create your models here.
-class movie(models.Model):
-    title = models.CharField(max_length=200)
-    release_date = models.DateField()
-    genre = models.CharField(max_length=100)
-    director = models.CharField(max_length=100)
-    description = models.TextField()
-    class Meta:
-        app_label = 'movie'
+class User(AbstractUser):
+    user_created = models.DateTimeField(auto_now_add=True)
+    last_login = models.DateTimeField(null=True, blank=True)
+
     def __str__(self):
-        return self.title
-    
+        return self.username
+
+
+class Genre(models.Model):
+    name = models.CharField(max_length=255)
+
+class Movie(models.Model):
+    title = models.CharField(max_length=255)
+    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
+    release_year = models.DateField()
+    description = models.TextField()
+    trailer_link = models.URLField()
+    length_in_minutes = models.PositiveIntegerField()
+    movie_rating = models.CharField(max_length=10)
+
+
+class Watchlist(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
+    added_at = models.DateTimeField(auto_now_add=True)
+
+
+
+
+
+
+
+
+
 class CustomUser(AbstractUser):
     def __str__(self):
         return self.username

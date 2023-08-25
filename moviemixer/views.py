@@ -1,29 +1,17 @@
 import requests
 from rest_framework import viewsets
-from .models import movie
-from .serializers import movieSerializer
-from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions, generics
-from .models import movie
-from rest_framework.views import APIView
 from django.contrib.auth import authenticate, login
-from rest_framework import viewsets
 from rest_framework_simplejwt.views import TokenObtainPairView
-# from rest_framework.decorators import action
-from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from rest_framework import viewsets
-from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework import status, permissions, generics
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.decorators import action
 from .models import *
 from .serializers import *
-from django.db.models import Sum
-
+from rest_framework.parsers import JSONParser
+from rest_framework.decorators import api_view
+from rest_framework import status
 
 
 
@@ -71,58 +59,31 @@ def get_trailers(request, id):
             return JsonResponse(movie_data)
 
 
+def getTopMovies(request):
+            url = "https://moviesdatabase.p.rapidapi.com/titles/"
+            querystring = {
+                "list": "top_boxoffice_200",
+                "info": "base_info",
 
-
-# -------------------Working Function------------------------------
-# def get_random_movie(request):
-#     try:
-#         genre = request.GET.get('genre')
-#         startYear = request.GET.get('startYear')
-#         endYear = request.GET.get('endYear')
-
-#         url = "https://moviesdatabase.p.rapidapi.com/titles/random"
-
-#         querystring = {"list":"most_pop_movies", "genre": genre, "info": "base_info", "startYear": startYear, "endYear": endYear}
-
-#         headers = {
-#             "X-RapidAPI-Key": "ede169c197msh94c9ec518d4a5e2p18d147jsn10e88d3b6b4b",
-#             "X-RapidAPI-Host": "moviesdatabase.p.rapidapi.com"
-#             }
-
-#         response = requests.get(url, headers=headers, params=querystring)
-
-#         movie_data = response.json()
-#         return JsonResponse(movie_data)
+            }
+            response = requests.get(url)
+            headers = {
+            "X-RapidAPI-Key": "ede169c197msh94c9ec518d4a5e2p18d147jsn10e88d3b6b4b",
+            "X-RapidAPI-Host": "moviesdatabase.p.rapidapi.com"
+            }
+            response = requests.get(url, headers=headers, params=querystring)
+            movie_data = response.json()
+            return JsonResponse(movie_data)
     
-
-    # except requests.RequestException as e:
-        # return JsonResponse({"error": "Error fetching random movie"}, status=500)
-    
-
-
-
-# class UserLoginView(APIView):
-#     def post(self, request):
-#         email = request.data.get('email')
-#         password = request.data.get('password')
-
-#         user = authenticate(request, username=email, password=password)
-#         if user:
-#             login(request, user)
-#             return Response({'message': 'Login successful'}, status=status.HTTP_200_OK)
-#         else:
-#             return Response({'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-
-
 
 
 class MovieViewSet(viewsets.ModelViewSet):
-    queryset = movie.objects.all()
+    queryset = Movie.objects.all()
     serializer_class = movieSerializer
 
 
 class UserCreate(APIView):
-    permission_classes = (permissions.AllowAny)
+    permission_classes = (permissions.AllowAny,)
     authentication_classes = ()
     def post(self, request, format='json'):
         serializer = CustomUserSerializer(data=request.data)
@@ -134,7 +95,6 @@ class UserCreate(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class UserDetail(generics.RetrieveAPIView):
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
     queryset = User.objects.all()
@@ -144,3 +104,14 @@ class UserDetail(generics.RetrieveAPIView):
 class UserViewSet(viewsets.ModelViewSet):
      queryset = User.objects.all()
      serializer_class = UserSerializer
+
+
+@api_view(['POST'])
+def add_to_watchlist(request):
+    if request.method == 'POST':
+        watchlist_data = JSONParser().parse(request)
+        watchlist_serializer = WatchlistSerializer(data=watchlist_data)
+        if watchlist_serializer.is_valid():
+             watchlist_serializer.save()
+        return JsonResponse(watchlist_serializer.data, status=status.HTTP_201_CREATED)
+    return JsonResponse(watchlist_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
