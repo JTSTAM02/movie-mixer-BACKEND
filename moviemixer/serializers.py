@@ -35,7 +35,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class WatchlistSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
+        model = Watchlist
         fields = '__all__'
 
 

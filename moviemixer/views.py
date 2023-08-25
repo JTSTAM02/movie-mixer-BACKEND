@@ -10,8 +10,10 @@ from rest_framework import viewsets
 from .models import *
 from .serializers import *
 from rest_framework.parsers import JSONParser
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+
 
 
 
@@ -112,6 +114,26 @@ def add_to_watchlist(request):
         watchlist_data = JSONParser().parse(request)
         watchlist_serializer = WatchlistSerializer(data=watchlist_data)
         if watchlist_serializer.is_valid():
-             watchlist_serializer.save()
-        return JsonResponse(watchlist_serializer.data, status=status.HTTP_201_CREATED)
+            watchlist_serializer.save()
+            return JsonResponse(watchlist_serializer.data, status=status.HTTP_201_CREATED)
     return JsonResponse(watchlist_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_watchlist(request):
+    user = request.user
+    watchlist = Watchlist.objects.filter(user=user)
+    serializer = WatchlistSerializer(watchlist, many=True)
+    return Response({'watchlist': serializer.data})
+
+
+@api_view(['POST'])
+def add_movie(request):
+    if request.method == 'POST':
+        movie_data = JSONParser().parse(request)
+        movie_serializer = movieSerializer(data=movie_data)
+        if movieSerializer.is_valid():
+            movieSerializer.save()
+        return JsonResponse(movie_serializer.data, status=status.HTTP_201_CREATED)
+    return Response(movie_serializer.errors, status=400)

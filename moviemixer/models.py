@@ -17,25 +17,20 @@ class Genre(models.Model):
 
 class Movie(models.Model):
     title = models.CharField(max_length=255)
-    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
     release_year = models.DateField()
     description = models.TextField()
-    trailer_link = models.URLField()
-    length_in_minutes = models.PositiveIntegerField()
-    movie_rating = models.CharField(max_length=10)
 
+
+# class Watchlist(models.Model):
+#     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+#     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
+#     added_at = models.DateTimeField(auto_now_add=True)
 
 class Watchlist(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
     added_at = models.DateTimeField(auto_now_add=True)
-
-
-
-
-
-
-
+    
 
 
 class CustomUser(AbstractUser):
@@ -49,10 +44,3 @@ class User(models.Model):
     password = models.CharField(max_length=50)
     date_registered = models.DateTimeField(null=True)
 
-class UserLog(models.Model):
-    log_id = models.AutoField(primary_key=True)
-    user_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    exercise_id = models.CharField(max_length=100)
-    date_completed = models.DateTimeField()
-    total_questions = models.CharField(max_length=100)
-    correct_answers = models.CharField(max_length=100)
