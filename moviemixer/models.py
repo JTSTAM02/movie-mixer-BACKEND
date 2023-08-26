@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.contrib.auth.models import User
 from django.conf import settings
 
 
@@ -14,6 +13,7 @@ class User(models.Model):
 
 
 class Movie(models.Model):
+    alphabetic_id = models.CharField(max_length=200, null=True)
     title = models.CharField(max_length=255)
     release_year = models.DateField()
     description = models.TextField()
@@ -26,13 +26,8 @@ class Watchlist(models.Model):
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
     added_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"{self.user.username} - {self.movie.title}"
-
 
 class CustomUser(AbstractUser):
     user_created = models.DateTimeField(default=None, null=True)
-    class Meta:
-        db_table = 'auth_user'
 
 

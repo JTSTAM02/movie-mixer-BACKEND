@@ -13,8 +13,37 @@ from rest_framework.parsers import JSONParser
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import action
+from datetime import date
 
 
+
+def get_random_movie_family_friendly(request):
+    try:
+        genre = request.GET.get('genre')
+        startYear = request.GET.get('startYear')
+        endYear = request.GET.get('endYear')
+
+        url = "https://moviesdatabase.p.rapidapi.com/titles/random"
+
+        querystring = {
+            "list": "most_pop_movies",
+            "genre": "Family",
+            "info": "base_info",
+            "startYear": startYear,
+            "endYear": endYear,
+        }
+
+        headers = {
+            "X-RapidAPI-Key": "ede169c197msh94c9ec518d4a5e2p18d147jsn10e88d3b6b4b",
+            "X-RapidAPI-Host": "moviesdatabase.p.rapidapi.com"
+        }
+
+        response = requests.get(url, headers=headers, params=querystring)
+        movie_data = response.json()
+        return JsonResponse(movie_data)
+    except requests.RequestException as e:
+        return JsonResponse({"error": "Error fetching random movie"}, status=500)
 
 
 def get_random_movie(request):
@@ -43,6 +72,7 @@ def get_random_movie(request):
         return JsonResponse(movie_data)
     except requests.RequestException as e:
         return JsonResponse({"error": "Error fetching random movie"}, status=500)
+
 
 def get_trailers(request, id):
             url = f"https://moviesdatabase.p.rapidapi.com/titles/{id}"
@@ -78,7 +108,6 @@ def getTopMovies(request):
             return JsonResponse(movie_data)
     
 
-
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = movieSerializer
@@ -108,17 +137,6 @@ class UserViewSet(viewsets.ModelViewSet):
      serializer_class = UserSerializer
 
 
-@api_view(['POST'])
-def add_to_watchlist(request):
-    if request.method == 'POST':
-        watchlist_data = JSONParser().parse(request)
-        watchlist_serializer = WatchlistSerializer(data=watchlist_data)
-        if watchlist_serializer.is_valid():
-            watchlist_serializer.save()
-            return JsonResponse(watchlist_serializer.data, status=status.HTTP_201_CREATED)
-    return JsonResponse(watchlist_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_watchlist(request):
@@ -128,55 +146,66 @@ def get_watchlist(request):
     return Response({'watchlist': serializer.data})
 
 
-# @api_view(['POST'])
-# def add_movie(request):
-#     if request.method == 'POST':
-#         movie_data = JSONParser().parse(request)
-#         movie_serializer = movieSerializer(data=movie_data)
-#         if movieSerializer.is_valid():
-#             movieSerializer.save()
-#         return JsonResponse(movie_serializer.data, status=status.HTTP_201_CREATED)
-#     return Response(movie_serializer.errors, status=400)
-
-
 @api_view(['POST'])
-def add_movie(request):
+def add_movie_and_watchlist(request):
     if request.method == 'POST':
+        user=request.user
+        alphabetic_id = request.data.get("alphabetic_id")
         movie_data = request.data  # Get the movie data from the request
-        movie_serializer = movieSerializer(data=movie_data)
-        if movie_serializer.is_valid():
-            movie_serializer.save()
-            user = request.user
-            movie_id = movie_data['id']  # Assuming the movie id is included in the request data
-            movie_instance = Movie.objects.get(id=movie_id)
-            Watchlist.objects.create(user=user, movie=movie_instance)
-            return Response({'message': 'Movie added to watchlist'}, status=status.HTTP_201_CREATED)
-        return Response(movie_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-
-@api_view(['POST'])
-def add_watchlist_movie(request):
-    user = request.user
-    movie_data = {
-            "title": request.data.get("title"),
-            "release_year": request.data.get("release_year"),
-            "description": request.data.get("description"),
-            "image": request.data.get("image"),
-            "userRating": request.data.get("userRating"),
-            "trailerLink": request.data.get("trailerLink"),
-        }
-
-    try:
-        movie = Movie.objects.get(id=movie_data["title"]) # getting the movie from the db if it exists, 3rd party api
-    except Movie.DoesNotExist:
-       
-        movie = Movie.objects.create(**movie_data)
-    added_at = request.data.get("added_at")
-    watchlist_data = Watchlist.objects.create(user=user, movie=movie, added_at = added_at)
-    watchlist_data.save()
-    message = 'Game added to favorites'
-    response_status = status.HTTP_201_CREATED
+        movie_id = 0
+        movie = Movie.objects.filter(alphabetic_id__exact=alphabetic_id)
+        if not movie:
+            movie_serializer = movieSerializer(data=movie_data)
+            if movie_serializer.is_valid():
+            # Save the movie instance and retrieve the saved instance with the generated ID
+                movie_instance = movie_serializer.save()             
+                movie_id = movie_instance.id
+        else:
+            movie_id = movie.first().id
         
-    return Response({'message':message}, status=response_status)
+
+        watchlist_data = {
+            'user': user.id,
+            'movie': movie_id,
+            'added_at': date.today()  # Use movie's release year or other appropriate data
+        }
+        watchlist = Watchlist.objects.filter(movie=movie_id, user=user)
+        if not watchlist:
+            watchlist_serializer = WatchlistSerializer(data=watchlist_data)
+            if watchlist_serializer.is_valid():
+                watchlist_serializer.save()
+                return Response({'message': 'Movie added to watchlist'}, status=status.HTTP_201_CREATED)
+            return Response(watchlist_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'message': 'Movie already in watchlist'}, status=status.HTTP_200_OK)
+
+    return Response({'message': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
+
+class MovieCreateSet(viewsets.ModelViewSet):
+     queryset= Movie.objects.all()
+     serializer_class = movieSerializer
+
+
+class WatchlistViewSet(viewsets.ViewSet):
+    @action(detail=False, methods=['post'])
+    def add_to_watchlist(self, request):
+        user = request.user
+        movie_id = request.data.get("movie_id")
+
+        try:
+            movie = Movie.objects.get(alphabetic_id=movie_id)
+        except Movie.DoesNotExist:
+            # return Response({"message": "Movie not found"}, status=404)
+
+            watchlist_entry, created = Watchlist.objects.get_or_create(user=user, movie=movie)
+
+        if created:
+            message = 'Movie added to watchlist'
+            status_code = 201
+        else:
+            watchlist_entry.delete()
+            message = 'Movie removed from watchlist'
+            status_code = 200
+
+        return Response({"message": message}, status=status_code)
