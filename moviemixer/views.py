@@ -128,12 +128,55 @@ def get_watchlist(request):
     return Response({'watchlist': serializer.data})
 
 
+# @api_view(['POST'])
+# def add_movie(request):
+#     if request.method == 'POST':
+#         movie_data = JSONParser().parse(request)
+#         movie_serializer = movieSerializer(data=movie_data)
+#         if movieSerializer.is_valid():
+#             movieSerializer.save()
+#         return JsonResponse(movie_serializer.data, status=status.HTTP_201_CREATED)
+#     return Response(movie_serializer.errors, status=400)
+
+
 @api_view(['POST'])
 def add_movie(request):
     if request.method == 'POST':
-        movie_data = JSONParser().parse(request)
+        movie_data = request.data  # Get the movie data from the request
         movie_serializer = movieSerializer(data=movie_data)
-        if movieSerializer.is_valid():
-            movieSerializer.save()
-        return JsonResponse(movie_serializer.data, status=status.HTTP_201_CREATED)
-    return Response(movie_serializer.errors, status=400)
+        if movie_serializer.is_valid():
+            movie_serializer.save()
+            user = request.user
+            movie_id = movie_data['id']  # Assuming the movie id is included in the request data
+            movie_instance = Movie.objects.get(id=movie_id)
+            Watchlist.objects.create(user=user, movie=movie_instance)
+            return Response({'message': 'Movie added to watchlist'}, status=status.HTTP_201_CREATED)
+        return Response(movie_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+@api_view(['POST'])
+def add_watchlist_movie(request):
+    user = request.user
+    movie_data = {
+            "title": request.data.get("title"),
+            "release_year": request.data.get("release_year"),
+            "description": request.data.get("description"),
+            "image": request.data.get("image"),
+            "userRating": request.data.get("userRating"),
+            "trailerLink": request.data.get("trailerLink"),
+        }
+
+    try:
+        movie = Movie.objects.get(id=movie_data["title"]) # getting the movie from the db if it exists, 3rd party api
+    except Movie.DoesNotExist:
+       
+        movie = Movie.objects.create(**movie_data)
+    added_at = request.data.get("added_at")
+    watchlist_data = Watchlist.objects.create(user=user, movie=movie, added_at = added_at)
+    watchlist_data.save()
+    message = 'Game added to favorites'
+    response_status = status.HTTP_201_CREATED
+        
+    return Response({'message':message}, status=response_status)
+
+

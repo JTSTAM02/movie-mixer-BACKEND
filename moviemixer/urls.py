@@ -21,7 +21,7 @@ urlpatterns = [
     path('token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('users/<int:pk>/', UserDetail.as_view(), name='get_user_details'), 
-    path('add_to_watchlist/', add_to_watchlist, name='add_to_watchlist'), 
+    path('add_to_watchlist/', add_watchlist_movie, name='add_to_watchlist'), 
     path('get_watchlist/', get_watchlist, name='get_watchlist'),
     path('add_movie/', add_movie, name='add_movie'),
 
