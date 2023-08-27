@@ -138,7 +138,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([permissions.IsAuthenticated, ])
 def get_watchlist(request):
     user = request.user
     watchlist = Watchlist.objects.filter(user=user)
@@ -146,39 +146,102 @@ def get_watchlist(request):
     return Response({'watchlist': serializer.data})
 
 
+# @api_view(['POST'])
+# def add_movie_and_watchlist(request):
+#     if request.method == 'POST':
+#         user=request.user
+#         alphabetic_id = request.data.get("alphabetic_id")
+#         movie_data = request.data  # Get the movie data from the request
+#         movie_id = 0
+#         movie = Movie.objects.filter(alphabetic_id__exact=alphabetic_id).first()
+#         if not movie:
+#             movie_serializer = movieSerializer(data=movie_data)
+#             if movie_serializer.is_valid():
+#             # Save the movie instance and retrieve the saved instance with the generated ID
+#                 movie_instance = movie_serializer.save()             
+#                 movie_id = movie_instance.id
+#         else:
+#             movie_id = movie.id
+        
+
+#         watchlist_data = {
+#             'user': user.id,
+#             'movie': movie_id,
+#             'added_at': date.today()  # Use movie's release year or other appropriate data
+#         }
+#         watchlist = Watchlist.objects.filter(movie=movie_id, user=user)
+#         if not watchlist:
+#             watchlist_serializer = WatchlistSerializer(data=watchlist_data)
+#             if watchlist_serializer.is_valid():
+#                 watchlist_serializer.save()
+
+#                 response_data = {
+#                     'message': 'Movie added to watchlist',
+#                     'movie': movie_serializer.data,  # Include the serialized movie object
+#                     'watchlist': watchlist_serializer.data  # Include the serialized watchlist entry
+#                 }
+
+#                 return Response(response_data, status=status.HTTP_201_CREATED)
+#                 # return Response({'message': 'Movie added to watchlist'}, status=status.HTTP_201_CREATED)
+#             return Response(watchlist_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#         return Response({'message': 'Movie already in watchlist'}, status=status.HTTP_200_OK)
+
+#     return Response({'message': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+
+
+
 @api_view(['POST'])
 def add_movie_and_watchlist(request):
     if request.method == 'POST':
-        user=request.user
+        user = request.user
         alphabetic_id = request.data.get("alphabetic_id")
         movie_data = request.data  # Get the movie data from the request
         movie_id = 0
-        movie = Movie.objects.filter(alphabetic_id__exact=alphabetic_id)
+        movie_instance = None  # Initialize movie_instance
+
+        movie = Movie.objects.filter(alphabetic_id__exact=alphabetic_id).first()
         if not movie:
             movie_serializer = movieSerializer(data=movie_data)
             if movie_serializer.is_valid():
-            # Save the movie instance and retrieve the saved instance with the generated ID
-                movie_instance = movie_serializer.save()             
+                # Save the movie instance and retrieve the saved instance with the generated ID
+                movie_instance = movie_serializer.save()
                 movie_id = movie_instance.id
         else:
-            movie_id = movie.first().id
-        
+            movie_id = movie.id
+
+        # Check if movie_instance is not None before using it
+        if movie_instance:
+            movie_serializer = movieSerializer(movie_instance)  # Pass the movie instance
 
         watchlist_data = {
             'user': user.id,
             'movie': movie_id,
             'added_at': date.today()  # Use movie's release year or other appropriate data
         }
+        
         watchlist = Watchlist.objects.filter(movie=movie_id, user=user)
         if not watchlist:
             watchlist_serializer = WatchlistSerializer(data=watchlist_data)
             if watchlist_serializer.is_valid():
-                watchlist_serializer.save()
-                return Response({'message': 'Movie added to watchlist'}, status=status.HTTP_201_CREATED)
+                watchlist_instance = watchlist_serializer.save()
+                watchlist_id = watchlist_instance.id
+
+                response_data = {
+                    'message': 'Movie added to watchlist',
+                    'movie': movie_serializer.data if movie_instance else None,  # Include the serialized movie object if available
+                    'watchlist': watchlist_serializer.data
+                }
+
+                return Response(response_data, status=status.HTTP_201_CREATED)
             return Response(watchlist_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response({'message': 'Movie already in watchlist'}, status=status.HTTP_200_OK)
 
     return Response({'message': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+
 
 
 
@@ -209,3 +272,29 @@ class WatchlistViewSet(viewsets.ViewSet):
             status_code = 200
 
         return Response({"message": message}, status=status_code)
+    
+
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, ])
+def get_movie(request):
+    user = request.user
+    movie_data = Movie.objects.filter(user=user)
+    serializer = movieSerializer(movie_data, many=True)
+    return Response({'movie data': serializer.data})
+
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def remove_from_watchlist(request, movie_id):
+    user = request.user
+
+    try:
+        watchlist_item = Watchlist.objects.get(user=user, movie=movie_id)
+        watchlist_item.delete()
+        return Response({'message': 'Movie removed from watchlist'}, status=status.HTTP_200_OK)
+    except Watchlist.DoesNotExist:
+        return Response({'message': 'Movie not found in watchlist'}, status=status.HTTP_404_NOT_FOUND)

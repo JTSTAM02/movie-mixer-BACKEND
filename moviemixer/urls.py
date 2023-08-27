@@ -27,5 +27,8 @@ urlpatterns = [
     path('users/<int:pk>/', UserDetail.as_view(), name='get_user_details'), 
     path('add_to_watchlist/', add_movie_and_watchlist, name='add_to_watchlist'), 
     path('get_watchlist/', get_watchlist, name='get_watchlist'),
+    path('get_movies/', get_movie, name='get_movie'),
+    path('remove_from_watchlist/', remove_from_watchlist, name='remove_from_watchlist'),
+
 ]
 
