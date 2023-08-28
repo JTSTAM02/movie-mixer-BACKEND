@@ -1,4 +1,3 @@
-from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from .models import *
@@ -23,17 +22,28 @@ class CustomUserSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-from .models import *
 
 class movieSerializer(serializers.ModelSerializer):
     class Meta:
-        model = movie
+        model = Movie
         fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = '__all__'  
+        fields = '__all__' 
+
+class WatchlistSerializer(serializers.ModelSerializer):
+    movie_title = serializers.ReadOnlyField(source='movie.title')
+    movie_image = serializers.ReadOnlyField(source='movie.image')
+    movie_release_year = serializers.ReadOnlyField(source='movie.release_year')
+    movie_trailerLink = serializers.ReadOnlyField(source='movie.trailerLink')
+    movie_userRating = serializers.ReadOnlyField(source='movie.userRating')
+
+    class Meta:
+        model = Watchlist
+        fields = '__all__'
+
 
 
 
